@@ -16,7 +16,7 @@ pytest-homeassistant-custom-component 0.13.364, HA frontend 20260826.6.
 | `ruff check custom_components tests` | Passed |
 | `ruff format --check custom_components tests` | Passed |
 | Official `script.hassfest --integration-path .../custom_components/glowbright` | 1 integration, 0 invalid integrations, no validation warnings |
-| HACS GitHub Action | Passed on the initial public push; final workflow rerun pending |
+| HACS GitHub Action | Passed on published implementation commit `f751841` |
 
 The six phase-six regression cases passed before implementing costs, backfill
 and the panel. They import and query real Recorder statistics: a delayed Monday
@@ -57,6 +57,11 @@ The first GitHub run passed HACS and hassfest. Its console-script `pytest`
 invocation exposed a missing repository import path; pytest configuration now
 explicitly includes the project root. Official checkout/setup-python Actions
 were also upgraded to v7 after the runner reported deprecated Node 20 targets.
+
+All three GitHub workflows passed on implementation commit `f751841`:
+[Tests](https://github.com/baileyboy0304/homeassistant-glowbright/actions/runs/34213734355),
+[Hassfest](https://github.com/baileyboy0304/homeassistant-glowbright/actions/runs/34213734349),
+and [HACS](https://github.com/baileyboy0304/homeassistant-glowbright/actions/runs/34213734324).
 
 ## Actual Home Assistant UI test with synthetic readings
 
@@ -104,7 +109,7 @@ and prompted fixes for the direct HTTP dependency and config-entry-only schema.
 - [x] Explicit approval to create the **public** GitHub repository
   `baileyboy0304/homeassistant-glowbright` and publish the source.
 - [x] Push code; enable issues and set description/topics.
-- [ ] Run all GitHub Actions, including the official HACS validation, without
+- [x] Run all GitHub Actions, including the official HACS validation, without
   suppressing genuine warnings.
 - [ ] Install through HACS custom repositories in a real HA 2026.9+ instance,
   restart, and authenticate a real Bright account inside Home Assistant.
