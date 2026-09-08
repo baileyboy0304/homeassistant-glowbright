@@ -11,6 +11,7 @@ test = ["pytest-homeassistant-custom-component==0.13.364", "home-assistant-front
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.ruff]

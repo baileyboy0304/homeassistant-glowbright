@@ -16,7 +16,7 @@ pytest-homeassistant-custom-component 0.13.364, HA frontend 20260826.6.
 | `ruff check custom_components tests` | Passed |
 | `ruff format --check custom_components tests` | Passed |
 | Official `script.hassfest --integration-path .../custom_components/glowbright` | 1 integration, 0 invalid integrations, no validation warnings |
-| HACS GitHub Action | Configured, not executed: repository publication is awaiting approval |
+| HACS GitHub Action | Passed on the initial public push; final workflow rerun pending |
 
 The six phase-six regression cases passed before implementing costs, backfill
 and the panel. They import and query real Recorder statistics: a delayed Monday
@@ -52,6 +52,11 @@ test functions.
 Additional tests cover resumable failed backfill, cache fallback, same-account
 reauthentication, account/fuel device parenting, entry migration, and removing
 only the selected entry's statistics while preserving another account.
+
+The first GitHub run passed HACS and hassfest. Its console-script `pytest`
+invocation exposed a missing repository import path; pytest configuration now
+explicitly includes the project root. Official checkout/setup-python Actions
+were also upgraded to v7 after the runner reported deprecated Node 20 targets.
 
 ## Actual Home Assistant UI test with synthetic readings
 
@@ -96,10 +101,11 @@ and prompted fixes for the direct HTTP dependency and config-entry-only schema.
 
 ## Remaining release gates
 
-- [ ] Explicit approval to create the **public** GitHub repository
+- [x] Explicit approval to create the **public** GitHub repository
   `baileyboy0304/homeassistant-glowbright` and publish the source.
-- [ ] Push code; enable issues, set description/topics; run all GitHub Actions,
-  including the official HACS validation, without suppressing genuine warnings.
+- [x] Push code; enable issues and set description/topics.
+- [ ] Run all GitHub Actions, including the official HACS validation, without
+  suppressing genuine warnings.
 - [ ] Install through HACS custom repositories in a real HA 2026.9+ instance,
   restart, and authenticate a real Bright account inside Home Assistant.
 - [ ] Confirm all live VEs/resources, independent fuel choices, tariff data and
@@ -112,10 +118,10 @@ and prompted fixes for the direct HTTP dependency and config-entry-only schema.
   that installation.
 - [ ] Only after these gates pass, prepare the 0.1.0 tag and GitHub release.
 
-Publication was blocked by automatic approval review because public visibility
-and source disclosure had not been explicitly authorized. No remote repository
-was created. A real Home Assistant test URL has not yet been supplied. Bright
-credentials should be entered directly in Home Assistant, never in chat.
+The user explicitly approved public publication and the code was pushed to
+`baileyboy0304/homeassistant-glowbright` on 8 September 2026. A real Home
+Assistant test URL has not yet been supplied. Bright credentials should be
+entered directly in Home Assistant, never in chat.
 
 ## Reproduce the synthetic UI
 

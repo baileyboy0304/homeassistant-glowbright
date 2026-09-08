@@ -18,7 +18,8 @@ is not an official Hildebrand or Bright product. It does not use Octopus APIs.
 
 ## Install and configure
 
-Once the repository is available on GitHub:
+The development code is available on GitHub; real-account release acceptance
+is still pending:
 
 1. In HACS, open **Custom repositories**, add
    `https://github.com/baileyboy0304/homeassistant-glowbright`, category **Integration**.
