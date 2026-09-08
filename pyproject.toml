@@ -1,6 +1,6 @@
 [project]
 name = "homeassistant-glowbright"
-version = "0.1.0"
+version = "0.1.0rc1"
 description = "Delayed Bright DCC interval imports for Home Assistant"
 requires-python = ">=3.14"
 license = "MIT"

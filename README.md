@@ -3,9 +3,10 @@
 An unofficial Home Assistant integration for Hildebrand Glowmarkt / Bright DCC
 smart-meter history. Requires **Home Assistant 2026.9 or later**.
 
-**Development status:** 0.1.0 implementation under validation. No release should
-be published until the real-account acceptance checklist in [VALIDATION.md](VALIDATION.md)
-is complete.
+**Current version: 0.1.0rc1**, the first numbered release candidate.
+See [releases](https://github.com/baileyboy0304/homeassistant-glowbright/releases)
+and the [changelog](CHANGELOG.md). Stable 0.1.0 awaits the remaining real-account
+acceptance checks in [VALIDATION.md](VALIDATION.md).
 
 DCC readings commonly arrive **24–48 hours late**. GlowBright imports each hour
 at its original consumption time. If Monday's readings arrive Wednesday, Monday
@@ -18,8 +19,7 @@ is not an official Hildebrand or Bright product. It does not use Octopus APIs.
 
 ## Install and configure
 
-The development code is available on GitHub; real-account release acceptance
-is still pending:
+The release candidate is available through HACS custom repositories:
 
 1. In HACS, open **Custom repositories**, add
    `https://github.com/baileyboy0304/homeassistant-glowbright`, category **Integration**.
@@ -29,6 +29,16 @@ is still pending:
 5. Select electricity, then independently select gas or **None**. Labels show the
    Virtual Entity, resource name, ID suffix, unit and latest data timestamp.
 6. Select historical cost resources if available and confirm.
+
+For release candidates, enable GlowBright's pre-release switch under the HACS
+integration's entities (the switch may initially be disabled). HACS then includes
+pre-releases in update checks; see [HACS's switch documentation](https://hacs.xyz/docs/use/entities/switch/).
+Select **v0.1.0rc1** when downloading/redownloading, then restart Home Assistant.
+The default branch remains a development snapshot and can display a commit hash.
+
+Every published version has a matching Git tag, GitHub release and integration
+version. Release candidates use `0.1.0rc1`, `0.1.0rc2`, and so on; stable releases
+use `0.1.0`, with subsequent fixes incrementing the patch number.
 
 An account can contain multiple Virtual Entities and multiple resources with the
 same classifier. Electricity from “DCC Sourced full” and gas from “DCC Sourced”

@@ -1,7 +1,8 @@
 # GlowBright 0.1.0 validation record
 
-Recorded 8 September 2026. **Implementation complete locally; release acceptance
-is not complete.** No tag or GitHub release has been created.
+Recorded 8 September 2026. **Stable-release acceptance is not complete.**
+Version `0.1.0rc1` is the first numbered release candidate, requested by the user
+after installation; it does not mark the remaining stable-release gates complete.
 
 ## Automated results
 
@@ -104,7 +105,16 @@ No GlowBright compatibility/deprecation warnings were observed after correcting
 device parenting to the current `via_device_id` API. Hassfest also identified
 and prompted fixes for the direct HTTP dependency and config-entry-only schema.
 
-## Remaining release gates
+## User installation evidence
+
+The user subsequently supplied a HACS download dialog and an Energy Dashboard
+screenshot showing GlowBright electricity consumption together with gas usage
+and costs on a historical date. This provides user-supplied installation and
+Energy UI evidence beyond the synthetic test instance. It does not independently
+verify every selected VE, backfill completion, gas source units, or the arrival
+of revised live intervals. The personal screenshots are not republished here.
+
+## Remaining stable-release gates
 
 - [x] Explicit approval to create the **public** GitHub repository
   `baileyboy0304/homeassistant-glowbright` and publish the source.
@@ -121,7 +131,7 @@ and prompted fixes for the direct HTTP dependency and config-entry-only schema.
   verify the original date changes without a current-day spike.
 - [ ] Complete desktop/mobile, theme and transient-outage panel acceptance on
   that installation.
-- [ ] Only after these gates pass, prepare the 0.1.0 tag and GitHub release.
+- [ ] Only after these gates pass, prepare the stable 0.1.0 tag and GitHub release.
 
 The user explicitly approved public publication and the code was pushed to
 `baileyboy0304/homeassistant-glowbright` on 8 September 2026. A real Home
