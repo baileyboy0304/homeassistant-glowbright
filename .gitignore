@@ -1,0 +1,11 @@
+.research/
+.venv/
+.venv-linux/
+.tools/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ha-test/

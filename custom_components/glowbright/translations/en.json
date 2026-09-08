@@ -1,0 +1,108 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your Bright account",
+        "description": "Use your existing Bright login. DCC data often arrives 24–48 hours late.",
+        "data": {
+          "username": "Bright username or email",
+          "password": "Password"
+        }
+      },
+      "electricity": {
+        "title": "Choose electricity",
+        "description": "Every active electricity resource is listed independently, including resources in different Virtual Entities.",
+        "data": {
+          "resource": "Electricity consumption resource"
+        }
+      },
+      "gas": {
+        "title": "Choose gas",
+        "description": "Gas may come from a different Virtual Entity. Select None for electricity only.",
+        "data": {
+          "resource": "Gas consumption resource"
+        }
+      },
+      "costs": {
+        "title": "Historical cost resources",
+        "description": "Only cost streams in each selected meter's Virtual Entity are shown. If several exist, choose the corresponding stream. None keeps consumption enabled without costs.",
+        "data": {
+          "electricity_cost": "Electricity historical cost",
+          "gas_cost": "Gas historical cost"
+        }
+      },
+      "confirm": {
+        "title": "Confirm meter selection",
+        "description": "Electricity: {electricity}\n\nGas: {gas}\n\nChanging a resource clears and rebuilds only that fuel's GlowBright history. Informational daily sensors are not the Energy source."
+      }
+    },
+    "error": {
+      "invalid_auth": "Bright rejected the credentials. Check your username and password.",
+      "cannot_connect": "Unable to reach Glowmarkt. Please try again.",
+      "invalid_resource": "Choose a resource from the displayed list.",
+      "calorific_required": "Enter a calorific value to enable estimated gas conversion."
+    },
+    "abort": {
+      "already_configured": "This Bright account is already configured.",
+      "wrong_account": "Use the same Bright account as the existing configuration.",
+      "no_resources": "No supported active electricity resources were found.",
+      "reauth_successful": "Bright authentication was updated.",
+      "reconfigure_successful": "GlowBright was reconfigured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "GlowBright options",
+        "description": "A resource or gas conversion change rebuilds that fuel's history. Conversion is an estimate; use the calorific value from your bill.",
+        "data": {
+          "backfill_days": "Historical backfill depth (days)",
+          "refresh_days": "Recent mutable window (days)",
+          "panel_enabled": "Show GlowBright sidebar panel",
+          "gas_conversion": "Convert gas m³ to estimated kWh",
+          "calorific_value": "Calorific value (MJ/m³)",
+          "volume_correction": "Volume correction factor"
+        }
+      },
+      "electricity": {
+        "title": "Choose electricity",
+        "description": "Every active electricity resource is listed independently, including resources in different Virtual Entities.",
+        "data": {
+          "resource": "Electricity consumption resource"
+        }
+      },
+      "gas": {
+        "title": "Choose gas",
+        "description": "Gas may come from a different Virtual Entity. Select None for electricity only.",
+        "data": {
+          "resource": "Gas consumption resource"
+        }
+      },
+      "costs": {
+        "title": "Historical cost resources",
+        "description": "Only cost streams in each selected meter's Virtual Entity are shown. If several exist, choose the corresponding stream. None keeps consumption enabled without costs.",
+        "data": {
+          "electricity_cost": "Electricity historical cost",
+          "gas_cost": "Gas historical cost"
+        }
+      },
+      "confirm": {
+        "title": "Confirm meter selection",
+        "description": "Electricity: {electricity}\n\nGas: {gas}\n\nChanging a resource clears and rebuilds only that fuel's GlowBright history. Informational daily sensors are not the Energy source."
+      }
+    },
+    "error": {
+      "invalid_auth": "Bright rejected the credentials. Check your username and password.",
+      "cannot_connect": "Unable to reach Glowmarkt. Please try again.",
+      "invalid_resource": "Choose a resource from the displayed list.",
+      "calorific_required": "Enter a calorific value to enable estimated gas conversion."
+    },
+    "abort": {
+      "already_configured": "This Bright account is already configured.",
+      "wrong_account": "Use the same Bright account as the existing configuration.",
+      "no_resources": "No supported active electricity resources were found.",
+      "reauth_successful": "Bright authentication was updated.",
+      "reconfigure_successful": "GlowBright was reconfigured."
+    }
+  }
+}
