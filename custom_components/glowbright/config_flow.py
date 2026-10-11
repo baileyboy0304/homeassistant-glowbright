@@ -9,6 +9,7 @@ from homeassistant.helpers.selector import SelectOptionDict, SelectSelector, Sel
 from .api import ApiError, AuthError, GlowmarktClient
 from .const import DEFAULT_OPTIONS, DOMAIN, FUELS, NONE
 from .models import cost_candidates
+from .navigation import validate_home_path
 
 
 def selector(resources, optional=False):
@@ -160,9 +161,13 @@ class GlowBrightOptionsFlow(SelectionSteps, config_entries.OptionsFlow):
         errors = {}
         defaults = {**DEFAULT_OPTIONS, **self.config_entry.options}
         if user_input is not None:
+            try:
+                validate_home_path(user_input.get("home_path", defaults["home_path"]))
+            except ValueError, UnicodeError:
+                errors["home_path"] = "invalid_home_path"
             if user_input.get("gas_conversion") and not user_input.get("calorific_value"):
                 errors["base"] = "calorific_required"
-            else:
+            if not errors:
                 self.selections = {**defaults, **user_input}
                 client = GlowmarktClient(
                     async_get_clientsession(self.hass),
@@ -185,6 +190,7 @@ class GlowBrightOptionsFlow(SelectionSteps, config_entries.OptionsFlow):
                 vol.Coerce(int), vol.Range(min=2, max=30)
             ),
             vol.Required("panel_enabled", default=defaults["panel_enabled"]): bool,
+            vol.Required("home_path", default=defaults["home_path"]): str,
             vol.Required("gas_conversion", default=defaults["gas_conversion"]): bool,
             vol.Optional(
                 "calorific_value",

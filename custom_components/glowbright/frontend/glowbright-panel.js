@@ -1,5 +1,24 @@
 /* GlowBright — bundled, dependency-free Home Assistant panel. MIT. */
 const TZ = "Europe/London";
+const DEFAULT_HOME_PATH = "/home-launcher/home";
+
+function homePath(value, origin) {
+  try {
+    if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return DEFAULT_HOME_PATH;
+    const decoded = decodeURIComponent(value);
+    if (decoded.startsWith("//") || /[\\\s\u0000-\u001f\u007f]/u.test(decoded) || decoded.split(/[?#]/)[0].split("/").some(part=>part==="." || part==="..")) return DEFAULT_HOME_PATH;
+    const target = new URL(value, origin);
+    if (target.origin !== origin || target.username || target.password || target.pathname.startsWith("//")) return DEFAULT_HOME_PATH;
+    return target.pathname + target.search + target.hash;
+  } catch { return DEFAULT_HOME_PATH; }
+}
+
+// This component is registered as a native HA panel, never an ingress iframe.
+function navigateHome(value, targetWindow = window) {
+  const path = homePath(value, targetWindow.location.origin);
+  targetWindow.history.pushState(null, "", path);
+  targetWindow.dispatchEvent(new Event("location-changed"));
+}
 const PERIODS = [["PT30M", "30 min"], ["PT1H", "Hour"], ["P1D", "Day"], ["P1W", "Week"], ["P1M", "Month"]];
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const number = value => value == null ? "—" : Number(value).toLocaleString("en-GB", {maximumFractionDigits: 3});
@@ -41,6 +60,8 @@ class GlowBrightPanel extends HTMLElement {
     this.date=localDate(Date.now()); this.accounts=[]; this.request=0;
   }
   set hass(value) { this._hass=value; if (this.isConnected && !this.started) this.start(); }
+  set panel(value) { this._panel=value; }
+  goHome() { navigateHome(this._panel?.config?.home_path); }
   connectedCallback() {
     this.resizeObserver = new ResizeObserver(() => {
       const compact = this.getBoundingClientRect().width < 650;
@@ -109,9 +130,11 @@ class GlowBrightPanel extends HTMLElement {
     const age=fuel.data_age_hours; const stale=age==null || age>24;
     const usageMap=new Map((this.series?.usage?.rows||[]).map(r=>[Date.parse(r.start),r.value]));
     const costMap=new Map((this.series?.cost?.rows||[]).map(r=>[Date.parse(r.start),r.value]));
-    this.shadowRoot.innerHTML=`<style>
-      :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f7f9);color:var(--primary-text-color,#1d3342);font-family:var(--paper-font-body1_-_font-family,system-ui,sans-serif)}
-      *{box-sizing:border-box} header{display:flex;align-items:center;gap:14px;padding:18px 24px;background:var(--card-background-color,#fff);border-bottom:1px solid var(--divider-color,#dde5eb)}
+    // Keep the actual header nodes mounted, including keyboard focus, on refresh.
+    if (!this.shadowRoot.querySelector("main")) this.shadowRoot.innerHTML=`<style>
+      :host{display:block;min-height:100%;background:var(--primary-background-color,#f4f7f9);color:var(--primary-text-color,#1d3342);font-family:var(--paper-font-body1_-_font-family,system-ui,sans-serif)}
+      *{box-sizing:border-box} header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 24px;background:var(--card-background-color,#fff);border-bottom:1px solid var(--divider-color,#dde5eb)}
+      header .home{flex:0 0 96px;width:96px;height:88px;min-width:44px;min-height:44px;border-radius:22px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(16,36,56,.92);color:#e5f7fa;border:1px solid rgba(185,238,245,.22);font-size:15px;line-height:20px}header .home svg{width:34px;height:34px;color:#b9eef5;flex:none}header .home:hover{background:rgba(23,52,76,.96)}header .home:focus-visible{outline:3px solid #6adcec;outline-offset:3px}header #menu{margin-left:auto;min-width:44px;min-height:44px;flex:none}header .brand{min-width:0}
       .mark{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:#123d50;color:#ffcc57;font-size:24px}h1{font-size:21px;margin:0;letter-spacing:-.6px}header p{margin:2px 0 0;font-size:12px;color:var(--secondary-text-color,#607580)}
       main{max-width:1130px;margin:auto;padding:28px 24px 48px}.top{display:flex;gap:18px;align-items:end;justify-content:space-between;margin-bottom:22px}h2{font-size:28px;letter-spacing:-.8px;margin:0 0 6px}.muted{color:var(--secondary-text-color,#687c86);font-size:13px;margin:0}
       button,select,input{font:inherit;color:inherit;background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#d5e0e5);border-radius:9px;padding:10px 13px;min-height:42px}button{cursor:pointer}button:hover{border-color:var(--primary-color,#168a8b)}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--primary-color,#168a8b);outline-offset:2px}button:disabled{opacity:.4;cursor:default}.segments{display:flex;gap:4px;background:var(--secondary-background-color,#e8eef1);padding:4px;border-radius:12px}.segments button{border:0;background:transparent;font-size:14px}.segments button.selected{background:var(--card-background-color,#fff);box-shadow:0 2px 5px #0001;font-weight:650;color:var(--primary-color,#117e80)}
@@ -119,7 +142,9 @@ class GlowBrightPanel extends HTMLElement {
       .card{background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#dde5eb);border-radius:17px;padding:24px}.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between}.nav{display:flex;align-items:center;gap:7px}.total{margin:28px 0 4px;font-size:38px;font-weight:650;letter-spacing:-1.3px}.total small{font-size:18px;font-weight:400;letter-spacing:0}.coverage{font-size:12px;color:var(--secondary-text-color,#687c86);margin-bottom:24px}.chart{width:100%;margin:16px 0 10px;min-height:180px}.chart svg{width:100%;display:block;overflow:visible}.chart text{font:11px system-ui;fill:var(--secondary-text-color,#687c86)}.grid{stroke:var(--divider-color,#dde5eb);stroke-width:1}.bar{fill:var(--primary-color,#19888b)}.missing{stroke:#b78635;stroke-dasharray:3 2;stroke-width:2}.legend{font-size:12px;color:var(--secondary-text-color,#687c86);margin:12px 0 0}
       .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}.summary .card{padding:19px}.summary dt{font-size:12px;color:var(--secondary-text-color,#687c86);margin-bottom:8px}.summary dd{font-size:19px;margin:0;font-weight:600}.summary small{font-size:12px;font-weight:400}.table-wrap{max-height:390px;overflow:auto;margin-top:15px}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--secondary-text-color,#687c86);font-size:12px;background:var(--card-background-color,#fff);position:sticky;top:0}td,th{padding:13px 10px;border-bottom:1px solid var(--divider-color,#dde5eb)}td:not(:first-child),th:not(:first-child){text-align:right}.error{padding:14px;border:1px solid #d8954a;border-radius:10px;margin:14px 0;font-size:14px}.empty{padding:42px 10px;text-align:center;color:var(--secondary-text-color,#687c86)}.footer{font-size:12px;line-height:1.7;margin-top:20px;color:var(--secondary-text-color,#687c86)}
       @media(max-width:650px){main{padding:20px 12px}.top{align-items:start;flex-direction:column}h2{font-size:25px}.card{padding:16px}.toolbar{align-items:stretch}.segments{flex-wrap:wrap}.segments button{padding:9px 10px}.summary{grid-template-columns:1fr;gap:10px}.summary .card{padding:15px}.summary dt{display:inline-block;width:48%;margin:0}.summary dd{display:inline-block}.freshness{gap:12px;align-items:start;flex-direction:column}.total{font-size:32px}.nav{width:100%;justify-content:space-between}header{padding:13px}.chart{min-height:100px}input{max-width:170px}}
-    </style><header><button id="menu" aria-label="Open sidebar">☰</button><span class="mark" aria-hidden="true">ϟ</span><div><h1>GlowBright</h1><p>Your energy, in its own time.</p></div></header><main>
+      @media(max-width:650px){header{gap:10px;padding:10px 12px}header .mark{display:none}header h1{font-size:18px}header p{max-width:130px;line-height:1.4}header #menu{padding:8px}}
+    </style><header><button id="home" class="home" type="button" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/></svg><span>Home</span></button><span class="mark" aria-hidden="true">ϟ</span><div class="brand"><h1>GlowBright</h1><p>Your energy, in its own time.</p></div><button id="menu" aria-label="Open sidebar">☰</button></header><main></main>`;
+    this.shadowRoot.querySelector("main").innerHTML=`
       <div class="top"><div><h2>Your energy history</h2><p class="muted">Bright DCC smart-meter readings · Europe/London</p></div><div class="segments" role="group" aria-label="Fuel">${["electricity","gas"].map(f=>`<button data-fuel="${f}" class="${this.fuel===f?"selected":""}" aria-pressed="${this.fuel===f}" ${!this.account?.fuels?.[f]?"disabled":""}>${f==="electricity"?"Electricity":"Gas"}</button>`).join("")}</div></div>
       ${this.accounts.length>1?`<label>Bright account <select id="account">${this.accounts.map(a=>`<option value="${escapeHTML(a.entry_id)}" ${a.entry_id===this.entryId?"selected":""}>${escapeHTML(a.title)} · ${escapeHTML(a.entry_id.slice(-5))}</option>`).join("")}</select></label>`:""}
       <section class="freshness ${stale?"stale":""}" aria-label="Data freshness"><div><strong>Latest DCC data: ${escapeHTML(displayTime(fuel.latest_reading))}</strong><p>${stale?"Readings are delayed. The latest dates may be incomplete.":"DCC readings can arrive or change 24–48 hours later."} Missing intervals are not zero usage.</p></div><span class="badge">${age==null?"Awaiting readings":`${number(Number(age.toFixed(1)))} hours old`}</span></section>
@@ -132,7 +157,8 @@ class GlowBrightPanel extends HTMLElement {
       <dl class="summary"><div class="card"><dt>Current unit rate</dt><dd>${number(fuel.tariff?.unit_rate)} <small>p/kWh</small></dd></div><div class="card"><dt>Standing charge</dt><dd>${number(fuel.tariff?.standing_charge)} <small>p/day</small></dd></div><div class="card"><dt>Last API update</dt><dd style="font-size:15px">${escapeHTML(displayTime(this.account?.last_api_update))}</dd></div></dl>
       <section class="card"><strong>Period breakdown</strong><div class="table-wrap"><table><thead><tr><th scope="col">${["PT30M","PT1H"].includes(this.period)?"Time (UK)":"Period beginning"}</th><th scope="col">Usage (${escapeHTML(fuel.unit||"kWh")})</th>${fuel.cost_available?"<th scope=\"col\">Usage cost (£)</th>":""}</tr></thead><tbody>${this.bins().map(stamp=>`<tr><td>${escapeHTML(this.label(stamp))}</td><td>${number(usageMap.get(Date.parse(stamp)))}</td>${fuel.cost_available?`<td>${number(costMap.get(Date.parse(stamp)))}</td>`:""}</tr>`).join("")}</tbody></table></div></section>
       <p class="footer">${escapeHTML(fuel.resource?.ve_name||"")} · ${escapeHTML(fuel.resource?.resource_name||"")}<br>Costs are API-supplied historical usage costs and exclude standing charge. ${fuel.estimated_conversion?"Gas energy is an estimate converted from meter volume.":""} ${fuel.tariff_error?"Tariff temporarily unavailable; showing the last successful tariff.":""}<br>GlowBright is an independent integration, unaffiliated with Hildebrand.</p>
-    </main>`;
+    `;
+    this.shadowRoot.querySelector("#home").onclick=()=>this.goHome();
     this.shadowRoot.querySelector("#menu").onclick=()=>this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:true,composed:true}));
     for (const key of ["fuel","metric","period"]) this.shadowRoot.querySelectorAll(`[data-${key}]`).forEach(button=>button.onclick=()=>this.change(key,button.dataset[key]));
     this.shadowRoot.querySelector("#previous").onclick=()=>this.navigate(-1);
@@ -143,4 +169,4 @@ class GlowBrightPanel extends HTMLElement {
   }
 }
 if (!customElements.get("glowbright-panel")) customElements.define("glowbright-panel",GlowBrightPanel);
-export {rangeFor, londonMidnight};
+export {rangeFor, londonMidnight, homePath, navigateHome};

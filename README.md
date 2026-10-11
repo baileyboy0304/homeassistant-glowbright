@@ -3,7 +3,7 @@
 An unofficial Home Assistant integration for Hildebrand Glowmarkt / Bright DCC
 smart-meter history. Requires **Home Assistant 2026.9 or later**.
 
-**Current version: 0.1.0rc1**, the first numbered release candidate.
+**Current version: 0.1.0rc2**, with persistent Home launcher navigation.
 See [releases](https://github.com/baileyboy0304/homeassistant-glowbright/releases)
 and the [changelog](CHANGELOG.md). Stable 0.1.0 awaits the remaining real-account
 acceptance checks in [VALIDATION.md](VALIDATION.md).
@@ -33,7 +33,7 @@ The release candidate is available through HACS custom repositories:
 For release candidates, enable GlowBright's pre-release switch under the HACS
 integration's entities (the switch may initially be disabled). HACS then includes
 pre-releases in update checks; see [HACS's switch documentation](https://hacs.xyz/docs/use/entities/switch/).
-Select **v0.1.0rc1** when downloading/redownloading, then restart Home Assistant.
+Select **v0.1.0rc2** when downloading/redownloading, then restart Home Assistant.
 The default branch remains a development snapshot and can display a commit hash.
 
 Every published version has a matching Git tag, GitHub release and integration
@@ -120,6 +120,30 @@ HACS acceptance remains pending. See [VALIDATION.md](VALIDATION.md).
 [Native m³ gas selector](docs/screenshots/energy-gas-selector.png)
 
 ## Maintenance and development
+
+### Return to the Home Assistant launcher
+
+The **Home** tile stays at the top left of GlowBright, including while scrolling
+or switching fuel, date, graph period and cost/usage views. It uses Home
+Assistant's native router and defaults to **`/home-launcher/home`**. Create that
+launcher dashboard separately if it does not already exist.
+
+Change **Home launcher path** in **Settings → Devices & services → GlowBright →
+Configure**. Only local paths with a single leading slash are accepted; absolute
+URLs, backslashes, whitespace and dot segments are rejected. The current Home
+Assistant origin is retained, so the same setting works locally and through
+remote HTTPS. No access token, iframe or second HA shell is used.
+
+GlowBright has one shared panel. With multiple accounts, the first configured
+account with an enabled panel supplies this path; changing the account displayed
+in the graph does not change the destination. Home remains available when meter
+data cannot load and to ordinary users permitted to open the panel. The launcher
+must also be available to those users. Navigation does not call device services.
+
+The tile supports keyboard activation and a visible focus ring. It retains its
+96 × 88 px touch target on narrow layouts. Update through HACS and restart HA to
+load the new panel configuration and bundle. GlowBright has no standalone or
+ingress mode requiring a separate absolute launcher URL.
 
 Removing an entry removes only its owned external statistics and bookkeeping.
 Other accounts/integrations are unaffected. Back up Recorder before deliberately

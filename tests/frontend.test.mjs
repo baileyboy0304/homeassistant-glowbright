@@ -11,7 +11,27 @@ globalThis.customElements = {
     registry.set(name, value);
   }
 };
-const { rangeFor } = await import("../custom_components/glowbright/frontend/glowbright-panel.js");
+const { rangeFor, homePath, navigateHome } = await import("../custom_components/glowbright/frontend/glowbright-panel.js");
+
+for (const origin of ["http://ha.local:8123", "https://ha.example.test"]) {
+  test(`Home stays on ${origin} and rejects unsafe configured destinations`, () => {
+    assert.equal(homePath("/custom-launcher/home?view=1#top", origin), "/custom-launcher/home?view=1#top");
+    for (const path of [undefined, "", "home", "https://other.test/home", "//other.test", "/\\other.test", "/%2fother.test", "/%5cother.test", "/a/../home", "/%2e%2e//other.test", "/\n/other.test", "/%09/other.test", "/%", "/%FF"]) {
+      assert.equal(homePath(path, origin), "/home-launcher/home", String(path));
+    }
+  });
+  test(`Home uses the native router after internal navigation on ${origin}`, () => {
+    const calls=[];
+    const targetWindow={location:{origin,pathname:"/glowbright"},history:{pushState(...args){calls.push(args);}},dispatchEvent(event){calls.push(event.type);}};
+    for (const route of ["/glowbright", "/glowbright?fuel=gas", "/glowbright/history/2026-10-11"]) {
+      targetWindow.location.pathname=route;
+      navigateHome("/custom-launcher/home",targetWindow);
+    }
+    assert.deepEqual(calls, Array.from({length:3},()=>[[null,"","/custom-launcher/home"],"location-changed"]).flat());
+    navigateHome("//other.test",targetWindow);
+    assert.deepEqual(calls.slice(-2),[[null,"","/home-launcher/home"],"location-changed"]);
+  });
+}
 
 test("reconnecting with an updated bundle preserves the registered panel", async () => {
   const first = registry.get("glowbright-panel");

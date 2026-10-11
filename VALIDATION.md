@@ -1,5 +1,36 @@
 # GlowBright 0.1.0 validation record
 
+## 0.1.0rc2 Home launcher update — 11 October 2026
+
+- 56 HA tests and 9 frontend tests passed. Official hassfest: 1 integration,
+  0 invalid integrations. The new cases cover unsafe URL rejection, saved
+  launcher options, shared panel updates, non-admin panel registration and
+  direct router navigation under local HTTP and remote HTTPS origins.
+- In the disposable HA 2026.9.1 instance, an administrator launched GlowBright
+  from a real launcher dashboard, navigated fuel/period/cost views, scrolled,
+  and activated Home by keyboard. The URL returned to `/home-launcher/home`.
+- An ordinary `system-users` account repeated launcher → GlowBright → Home
+  at a 390 × 844 viewport after switching gas/month/cost/date views and scrolling.
+  The Home tile stayed at the top with its 96 × 88 px dimensions. Its visible
+  keyboard focus ring was checked on desktop. The tests also included a page
+  refresh and fresh sign-in before repeating the flow.
+- The first live layout check exposed an overflow container that prevented
+  sticky positioning during HA's outer-page scroll. Removing that overflow
+  fixed the problem; both desktop and narrow-screen scroll checks passed.
+- [Desktop keyboard/scroll screenshot](docs/screenshots/home-desktop.png) and
+  [mobile-width screenshot](docs/screenshots/home-mobile.png) use synthetic data.
+- Physical iPhone Safari, the user's remote HTTPS endpoint, and the user's
+  ordinary account still require deployment acceptance. Responsive Chromium
+  checks and origin-validation tests do not replace those checks.
+
+Only GlowBright is changed. Its native panel uses `pushState` followed by
+`location-changed`; it sends no iframe navigation messages, calls no device
+services, and contains no embedded HA credentials. The sidebar menu remains
+available, with no global sidebar/kiosk setting changes. GlowBright has no
+playback or fullscreen feature to modify.
+
+## Original implementation record
+
 Recorded 8 September 2026. **Stable-release acceptance is not complete.**
 Version `0.1.0rc1` is the first numbered release candidate, requested by the user
 after installation; it does not mark the remaining stable-release gates complete.

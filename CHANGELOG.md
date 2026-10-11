@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0rc2 — 2026-10-11
+
+- Add a persistent, keyboard-accessible Home tile to the native panel header,
+  with the requested 96 × 88 px layout and outlined house icon.
+- Navigate directly through Home Assistant's router to `/home-launcher/home`,
+  independent of graph navigation and the currently displayed account.
+- Add a validated **Home launcher path** option. Keep the current HTTP/HTTPS
+  origin and reject external or malformed destinations.
+- Preserve the header and its keyboard focus during data refreshes. Home works
+  before meter data loads and is available to permitted non-admin users.
+- Add navigation regression tests and a launcher/ordinary-user fixture to the
+  disposable HA demo. No device services, tokens, ingress messages or global
+  Home Assistant sidebar settings are changed.
+
 ## 0.1.0rc1 — 2026-09-08
 
 First numbered release candidate for HACS installation and testing.

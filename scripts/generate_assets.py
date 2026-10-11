@@ -40,5 +40,7 @@ errors={"invalid_auth":"Bright rejected the credentials. Check your username and
 aborts={"already_configured":"This Bright account is already configured.","wrong_account":"Use the same Bright account as the existing configuration.","no_resources":"No supported active electricity resources were found.","reauth_successful":"Bright authentication was updated.","reconfigure_successful":"GlowBright was reconfigured."}
 options={"init":{"title":"GlowBright options","description":"A resource or gas conversion change rebuilds that fuel's history. Conversion is an estimate; use the calorific value from your bill.","data":{"backfill_days":"Historical backfill depth (days)","refresh_days":"Recent mutable window (days)","panel_enabled":"Show GlowBright sidebar panel","gas_conversion":"Convert gas m³ to estimated kWh","calorific_value":"Calorific value (MJ/m³)","volume_correction":"Volume correction factor"}},**{key:value for key,value in steps.items() if key!="user"}}
 target=ROOT / "translations"
+options["init"]["data"]["home_path"] = "Home launcher path (for example /home-launcher/home)"
+option_errors = {**errors, "invalid_home_path": "Enter a local path starting with one slash, such as /home-launcher/home. External URLs, backslashes, whitespace and dot segments are not allowed."}
 target.mkdir(exist_ok=True)
-(target / "en.json").write_text(json.dumps({"config":{"step":steps,"error":errors,"abort":aborts},"options":{"step":options,"error":errors,"abort":aborts}},ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+(target / "en.json").write_text(json.dumps({"config":{"step":steps,"error":errors,"abort":aborts},"options":{"step":options,"error":option_errors,"abort":aborts}},ensure_ascii=False,indent=2)+"\n",encoding="utf-8")

@@ -2,6 +2,7 @@
 
 Run on Linux: python scripts/run_ha_demo.py
 HA login: demo / glowbright-local-demo. Bright test login: demo / demo.
+Ordinary HA login: viewer / glowbright-local-viewer.
 Only this process replaces the API; the shipped integration has no demo mode.
 """
 
@@ -78,6 +79,8 @@ async def main():
     hass=HomeAssistant(str(CONFIG))
     loader.async_setup(hass)
     config={"homeassistant":{"name":"GlowBright synthetic UI test","latitude":51.5,"longitude":-.1,"elevation":10,"unit_system":"metric","time_zone":"Europe/London","country":"GB","currency":"GBP"},"http":{"server_host":"127.0.0.1","server_port":8123},"frontend":{},"config":{},"recorder":{},"history":{},"energy":{}}
+    (CONFIG / "launcher.yaml").write_text("title: Home launcher\nviews:\n  - title: Home\n    path: home\n    cards:\n      - type: button\n        name: GlowBright\n        icon: mdi:flash\n        tap_action:\n          action: navigate\n          navigation_path: /glowbright\n", encoding="utf-8")
+    config["lovelace"] = {"mode":"yaml","dashboards":{"home-launcher":{"mode":"yaml","title":"Home launcher","show_in_sidebar":True,"filename":"launcher.yaml"}}}
     if await async_from_config_dict(config,hass) is None:
         raise RuntimeError("Home Assistant setup failed")
     if not any(u.name=="GlowBright demo" for u in await hass.auth.async_get_users()):
@@ -85,6 +88,12 @@ async def main():
         await provider.async_add_auth("demo","glowbright-local-demo")
         credentials=await provider.async_get_or_create_credentials({"username":"demo"})
         user=await hass.auth.async_create_user("GlowBright demo",group_ids=["system-admin"],local_only=True)
+        await hass.auth.async_link_user(user,credentials)
+    if not any(u.name=="GlowBright viewer" for u in await hass.auth.async_get_users()):
+        provider=next(p for p in hass.auth.auth_providers if p.type=="homeassistant")
+        await provider.async_add_auth("viewer","glowbright-local-viewer")
+        credentials=await provider.async_get_or_create_credentials({"username":"viewer"})
+        user=await hass.auth.async_create_user("GlowBright viewer",group_ids=["system-users"],local_only=True)
         await hass.auth.async_link_user(user,credentials)
     await hass.async_start()
     print("Synthetic Home Assistant UI ready at http://localhost:8123",flush=True)
