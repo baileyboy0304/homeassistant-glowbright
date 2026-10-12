@@ -3,7 +3,7 @@
 An unofficial Home Assistant integration for Hildebrand Glowmarkt / Bright DCC
 smart-meter history. Requires **Home Assistant 2026.9 or later**.
 
-**Current version: 0.1.0rc2**, with persistent Home launcher navigation.
+**Current version: 0.1.0rc3**, with corrected tariff sources and persistent Home launcher navigation.
 See [releases](https://github.com/baileyboy0304/homeassistant-glowbright/releases)
 and the [changelog](CHANGELOG.md). Stable 0.1.0 awaits the remaining real-account
 acceptance checks in [VALIDATION.md](VALIDATION.md).
@@ -33,8 +33,11 @@ The release candidate is available through HACS custom repositories:
 For release candidates, enable GlowBright's pre-release switch under the HACS
 integration's entities (the switch may initially be disabled). HACS then includes
 pre-releases in update checks; see [HACS's switch documentation](https://hacs.xyz/docs/use/entities/switch/).
-Select **v0.1.0rc2** when downloading/redownloading, then restart Home Assistant.
-The default branch remains a development snapshot and can display a commit hash.
+In the download/redownload dialog, expand **Need a different version?** and
+select **v0.1.0rc3**, then restart Home Assistant. If the release is missing,
+enable pre-releases and use **Update information** in GlowBright's HACS menu.
+The default branch remains a development snapshot and can display a commit hash;
+choose the release tag to track a numbered release instead.
 
 Every published version has a matching Git tag, GitHub release and integration
 version. Release candidates use `0.1.0rc1`, `0.1.0rc2`, and so on; stable releases
