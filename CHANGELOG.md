@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0rc3 — 2026-10-12
+
+- Fix current unit rates and standing charges being read from consumption
+  resources. Read the matching cost resource's tariff, as Bright's tariff screen
+  does; the two resources can report different rates.
+- Use the selected historical cost resource, or the unique matching cost
+  resource in the same Virtual Entity when historical costs are disabled.
+  Missing or ambiguous matches leave tariffs unknown instead of guessing.
+- Discard cached tariffs from the old source on upgrade. Retain last-good rates
+  during outages only when they came from the same cost resource.
+- Expose tariff source, last successful tariff refresh, and error status in
+  sensor attributes and diagnostics. Historical statistics remain unchanged.
+
 ## 0.1.0rc2 — 2026-10-11
 
 - Add a persistent, keyboard-accessible Home tile to the native panel header,

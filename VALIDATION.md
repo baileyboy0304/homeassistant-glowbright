@@ -1,5 +1,28 @@
 # GlowBright 0.1.0 validation record
 
+## 0.1.0rc3 tariff source correction — 12 October 2026
+
+- Confirmed the source mismatch against Bright's publicly served application:
+  [tariff screen module](https://bright.glowmarkt.com/7276.017982d62a138819.js)
+  selects the electricity/gas **cost** resource before calling the tariff service.
+  The [shared service](https://bright.glowmarkt.com/main.acb1aee29fabccd9.js) reads
+  `currentRates` from `/resource/{id}/tariff`. GlowBright rc2 instead passed the
+  consumption resource ID. No copied Bright code or private account data is
+  included in this change.
+- 66 HA tests and 9 frontend tests passed; Ruff lint and format checks passed.
+  Ten new cases cover differing consumption/cost tariffs, tariff reads with
+  historical costs disabled, gas, ambiguous/missing resources, same-VE isolation,
+  cache migration, outages and authentication errors. Recorder checks confirm
+  current tariffs do not alter historical API costs or clear existing statistics.
+- Diagnostics and sensor attributes now identify the tariff resource, last
+  successful tariff refresh and errors. Pre-rc3 tariff caches are invalidated
+  without resetting history.
+- The user's live instance has not been checked after this update: browser
+  automation fails before connecting. Production acceptance requires installing
+  rc3, restarting HA, and checking the next successful tariff refresh against
+  Bright. The regression rates are test fixtures, not a captured cost-resource
+  response from the user's account.
+
 ## 0.1.0rc2 Home launcher update — 11 October 2026
 
 - 56 HA tests and 9 frontend tests passed. Official hassfest: 1 integration,

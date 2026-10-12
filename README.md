@@ -77,8 +77,18 @@ Cost statistics come from the historical Glowmarkt cost resource, with pence
 converted to GBP. GlowBright never multiplies old usage by today's tariff and
 never adds a standing charge to hourly usage/cost statistics. **Energy costs
 exclude standing charge**. Current unit rate (p/kWh) and standing charge (p/day)
-are separate sensors and panel values; a failed tariff fetch retains the last
-successful tariff without disabling consumption.
+are separate sensors and panel values. Like Bright, GlowBright reads the tariff
+of the matching **cost resource**, not the consumption resource. It uses your
+selected cost resource, or the sole matching cost resource in the same Virtual
+Entity if you have not enabled historical cost imports. If several match, select
+the desired cost resource in the integration options. If none matches, current
+tariff values remain unknown; consumption still works.
+
+A failed tariff fetch retains the last successful tariff from that same source.
+Tariff sensors and diagnostics expose `tariff_resource_id`, `tariff_updated_at`
+and `tariff_error`. Upgrading from rc2 clears the old consumption-resource tariff
+cache; the next successful refresh fills it from the correct source. Historical
+consumption and cost statistics are not reset or recalculated by this change.
 
 Gas already in kWh remains kWh. Gas in m³ remains volume by default; Home
 Assistant Energy supports external gas volume statistics. Optional conversion

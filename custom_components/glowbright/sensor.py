@@ -126,11 +126,20 @@ class GlowBrightSensor(CoordinatorEntity, SensorEntity):
             return {fuel: book["streams"] for fuel, book in self.coordinator.book["fuels"].items()}
         if self.fuel:
             resource = self.coordinator.selected[self.fuel]
-            return {
+            attributes = {
                 "ve_name": resource.ve_name,
                 "resource_id": resource.resource_id,
                 "classifier": resource.classifier,
                 "base_unit": resource.base_unit,
                 "historical_energy_source": False,
             }
+            if self.key in ("unit_rate", "standing_charge"):
+                state = self.coordinator.public_status()["fuels"][self.fuel]
+                attributes.update(
+                    {
+                        key: state.get(key)
+                        for key in ("tariff_resource_id", "tariff_updated_at", "tariff_error")
+                    }
+                )
+            return attributes
         return None

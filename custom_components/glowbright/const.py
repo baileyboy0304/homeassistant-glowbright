@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 DOMAIN = "glowbright"
-VERSION = "0.1.0rc2"
+VERSION = "0.1.0rc3"
 DEFAULT_HOME_PATH = "/home-launcher/home"
 API_URL = "https://api.glowmarkt.com/api/v0-1"
 BRIGHT_APPLICATION_ID = "b0f1b774-a586-4f72-9edd-27ead8aa7a8d"

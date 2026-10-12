@@ -10,10 +10,11 @@ from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.statistics import statistics_during_period
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.glowbright.api import ApiError
+from custom_components.glowbright.api import ApiError, AuthError
 from custom_components.glowbright.coordinator import GlowBrightCoordinator
 from custom_components.glowbright.diagnostics import async_get_config_entry_diagnostics
 from custom_components.glowbright.models import Resource
+from custom_components.glowbright.sensor import GlowBrightSensor
 from custom_components.glowbright.statistics import metadata, statistic_id
 from custom_components.glowbright.websocket import get_series
 
@@ -130,6 +131,129 @@ async def test_outage_tariff_and_last_good(hass, freezer):
     assert coordinator.status["fuels"]["electricity"]["tariff"]["standing_charge"] == 55
     assert not coordinator.auth_failed
     assert coordinator.status["api_error"]
+
+
+@pytest.mark.parametrize("import_costs", [False, True])
+async def test_tariff_uses_cost_resource_like_bright(hass, freezer, import_costs):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass, dual=False, cost=import_costs)
+
+    async def tariff(resource_id):
+        return {
+            "e": {"unit_rate": 21.9, "standing_charge": 67.5},
+            "ec": {"unit_rate": 20.83, "standing_charge": 64.25},
+        }[resource_id]
+
+    coordinator.client.tariff.side_effect = tariff
+    await coordinator._recent()
+    coordinator.client.tariff.assert_awaited_once_with("ec")
+    state = coordinator.public_status()["fuels"]["electricity"]
+    assert state["tariff"] == {"unit_rate": 20.83, "standing_charge": 64.25}
+    assert state["tariff_resource_id"] == "ec"
+    assert state["tariff_updated_at"]
+    assert not state["tariff_error"]
+    coordinator.account_device_id = "test-device"
+    sensor = GlowBrightSensor(coordinator, "electricity", "unit_rate", "Unit rate", None, "p/kWh")
+    assert sensor.native_value == 20.83
+    assert sensor.extra_state_attributes["tariff_resource_id"] == "ec"
+    assert sensor.extra_state_attributes["tariff_error"] is False
+    diagnostic = await async_get_config_entry_diagnostics(hass, coordinator.entry)
+    assert diagnostic["status"]["fuels"]["electricity"]["tariff_resource_id"] == "ec"
+    cost_rows = await coordinator.importer.series(
+        statistic_id(coordinator.entry.entry_id, "electricity", "cost"), MONDAY, None
+    )
+    if import_costs:
+        # Historical API costs stay independent of the current tariff.
+        assert cost_rows[-1]["sum"] == pytest.approx(4.8)
+    else:
+        assert cost_rows == []
+
+
+@pytest.mark.parametrize("ambiguous", [False, True])
+async def test_tariff_never_falls_back_to_consumption_or_another_ve(hass, freezer, ambiguous):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass, dual=False, cost=False)
+    if ambiguous:
+        coordinator.client.discover.return_value.append(
+            Resource("a", "Full", "ec2", "Other cost", "electricity.consumption.cost", "pence")
+        )
+    else:
+        coordinator.client.discover.return_value[:] = [
+            r for r in coordinator.resources if r.resource_id != "ec"
+        ]
+    await coordinator.initialize()
+    await coordinator._recent()
+    coordinator.client.tariff.assert_not_awaited()
+    state = coordinator.public_status()["fuels"]["electricity"]
+    assert state["tariff"] == {}
+    assert state["tariff_error"]
+    rows = await coordinator.importer.series(
+        statistic_id(coordinator.entry.entry_id, "electricity"), MONDAY, None
+    )
+    assert rows[-1]["sum"] == 48
+
+
+async def test_explicit_cost_selection_resolves_tariff_ambiguity(hass, freezer):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass, dual=False)
+    coordinator.client.discover.return_value.append(
+        Resource("a", "Full", "ec2", "Other cost", "electricity.consumption.cost", "pence")
+    )
+    await coordinator.initialize()
+    await coordinator._recent()
+    coordinator.client.tariff.assert_awaited_once_with("ec")
+
+
+async def test_gas_tariff_also_uses_matching_cost_resource(hass, freezer):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass)
+    coordinator.client.discover.return_value.append(
+        Resource("b", "DCC", "gc", "Gas cost", "gas.consumption.cost", "pence")
+    )
+    await coordinator.initialize()
+    coordinator.client.tariff.return_value = {"unit_rate": 8.368, "standing_charge": 27.636}
+    await coordinator._recent()
+    assert [call.args[0] for call in coordinator.client.tariff.await_args_list] == ["ec", "gc"]
+    assert coordinator.public_status()["fuels"]["gas"]["tariff"]["unit_rate"] == 8.368
+
+
+@pytest.mark.parametrize("cached_source", [None, "old-cost", "ec"])
+async def test_tariff_cache_migration_and_outage(hass, freezer, cached_source):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass, dual=False)
+    book = coordinator.book["fuels"]["electricity"]
+    book["tariff"] = {"unit_rate": 21.9, "standing_charge": 67.5}
+    book["tariff_resource_id"] = cached_source
+    book["tariff_updated_at"] = MONDAY.isoformat()
+    await coordinator.store.async_save(coordinator.book)
+    restarted = GlowBrightCoordinator(hass, coordinator.entry, coordinator.client)
+    with patch.object(restarted.importer, "clear_owned", new_callable=AsyncMock) as clear:
+        await restarted.initialize()
+    clear.assert_not_awaited()
+    restarted.client.tariff.side_effect = ApiError("Temporary outage")
+    await restarted._recent()
+    restarted.client.tariff.assert_awaited_once_with("ec")
+    state = restarted.public_status()["fuels"]["electricity"]
+    assert state["tariff_error"]
+    if cached_source == "ec":
+        assert state["tariff"] == book["tariff"]
+        assert state["tariff_updated_at"] == MONDAY.isoformat()
+    else:
+        assert state["tariff"] == {}
+        assert state["tariff_updated_at"] is None
+    rows = await restarted.importer.series(
+        statistic_id(coordinator.entry.entry_id, "electricity"), MONDAY, None
+    )
+    assert rows[-1]["sum"] == 48
+
+
+async def test_tariff_auth_failure_still_requires_reauthentication(hass, freezer):
+    freezer.move_to(MONDAY + timedelta(days=2))
+    coordinator = await make_coordinator(hass, dual=False)
+    coordinator.client.tariff.side_effect = AuthError("Authentication rejected")
+    with pytest.raises(AuthError):
+        await coordinator._recent()
+    coordinator.client.tariff.assert_awaited_once_with("ec")
 
 
 async def test_resource_change_rebuilds_one_fuel(hass, freezer):

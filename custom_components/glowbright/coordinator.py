@@ -38,6 +38,7 @@ class GlowBrightCoordinator(DataUpdateCoordinator):
         self.resources = []
         self.selected = {}
         self.costs = {}
+        self.tariffs = {}
         self.status = {"last_api_update": None, "api_error": None, "fuels": {}}
         self.auth_failed = False
         self._work_lock = asyncio.Lock()
@@ -77,6 +78,10 @@ class GlowBrightCoordinator(DataUpdateCoordinator):
             candidates = cost_candidates(self.resources, resource)
             cost = next((r for r in candidates if r.key == self.options.get(f"{fuel}_cost")), None)
             self.costs[fuel] = cost
+            # Bright reads tariffs from cost resources, not consumption resources.
+            # Reading a tariff is independent of opting into historical costs.
+            tariff_resource = cost or (candidates[0] if len(candidates) == 1 else None)
+            self.tariffs[fuel] = tariff_resource
             unit, factor = self.unit_factor(fuel)
             identity = [resource.key, resource.base_unit, unit, factor, cost.key if cost else None]
             if old.get("identity") != identity:
@@ -88,6 +93,14 @@ class GlowBrightCoordinator(DataUpdateCoordinator):
                 )
                 old = {"identity": identity, "resource_id": resource.resource_id, "streams": {}}
                 self.book["fuels"][fuel] = old
+            if (
+                tariff_resource is None
+                or old.get("tariff_resource_id") != tariff_resource.resource_id
+            ):
+                # Do not retain pre-rc3 consumption tariffs or another source's
+                # cached rates if the first request to the correct source fails.
+                for key in ("tariff", "tariff_resource_id", "tariff_updated_at"):
+                    old.pop(key, None)
             for metric in ("consumption", "cost"):
                 stat_id = statistic_id(self.entry.entry_id, fuel, metric)
                 if stat_id not in self.book["owned_ids"]:
@@ -98,6 +111,9 @@ class GlowBrightCoordinator(DataUpdateCoordinator):
                 "unit": unit,
                 "estimated_conversion": factor != 1,
                 "tariff": old.get("tariff", {}),
+                "tariff_resource_id": tariff_resource.resource_id if tariff_resource else None,
+                "tariff_updated_at": old.get("tariff_updated_at"),
+                "tariff_error": tariff_resource is None,
                 "cost_available": cost is not None,
                 "statistics": {
                     m: statistic_id(self.entry.entry_id, fuel, m) for m in ("consumption", "cost")
@@ -176,8 +192,14 @@ class GlowBrightCoordinator(DataUpdateCoordinator):
             except ApiError as err:
                 errors.append(str(err))
             try:
-                state["tariff"] = await self.client.tariff(resource.resource_id)
+                tariff_resource = self.tariffs[fuel]
+                if tariff_resource is None:
+                    raise ApiError("No unambiguous matching cost resource for tariff")
+                state["tariff"] = await self.client.tariff(tariff_resource.resource_id)
+                state["tariff_updated_at"] = dt_util.utcnow().isoformat()
                 book["tariff"] = state["tariff"]
+                book["tariff_resource_id"] = tariff_resource.resource_id
+                book["tariff_updated_at"] = state["tariff_updated_at"]
                 state["tariff_error"] = False
             except AuthError:
                 raise
