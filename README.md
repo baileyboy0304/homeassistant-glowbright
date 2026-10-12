@@ -30,14 +30,13 @@ The release candidate is available through HACS custom repositories:
    Virtual Entity, resource name, ID suffix, unit and latest data timestamp.
 6. Select historical cost resources if available and confirm.
 
-For release candidates, enable GlowBright's pre-release switch under the HACS
-integration's entities (the switch may initially be disabled). HACS then includes
-pre-releases in update checks; see [HACS's switch documentation](https://hacs.xyz/docs/use/entities/switch/).
-In the download/redownload dialog, expand **Need a different version?** and
-select **v0.1.0rc3**, then restart Home Assistant. If the release is missing,
-enable pre-releases and use **Update information** in GlowBright's HACS menu.
-The default branch remains a development snapshot and can display a commit hash;
-choose the release tag to track a numbered release instead.
+**v0.1.0rc3** is published as the default GitHub release so HACS can offer its
+version number without enabling pre-release updates. It remains a release
+candidate, with the outstanding live acceptance checks listed above.
+Use **Update information** in GlowBright's HACS menu to refresh cached metadata,
+then download/update and restart Home Assistant. If an existing installation is
+tracking the development branch, expand **Need a different version?** and select
+**v0.1.0rc3** once to switch to the numbered release.
 
 Every published version has a matching Git tag, GitHub release and integration
 version. Release candidates use `0.1.0rc1`, `0.1.0rc2`, and so on; stable releases
